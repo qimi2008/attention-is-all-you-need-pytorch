@@ -27,7 +27,7 @@ class ScaledDotProductAttention(nn.Module):
 
             将q除以self.temperature是为了缩放注意力权重。通过除以温度参数，
             可以控制softmax函数的输出范围，使得模型更加稳定并且有更好的梯度传播。
-            这个步骤有助于确保在计算注意力时不会出现数值上的不稳定性或溢出问题。
+            这个步骤有助于确保在计算注意力时不会出现数值上的不稳定性或溢出问题。在这里，temperature被赋值为d_k ** 0.5，注意公式中的d_k ** 0.5和代码中的d_k ** 0.5所在的位置
 
             attn是形状为(batch_size, num_heads, seq_length, seq_length)的张量。在softmax中的dim=-1表示作用于最后一个维度
             softmax操作是在最后一个维度上进行的，不会改变张量的形状，仅在该维度上进行归一化处理
