@@ -16,6 +16,9 @@ class MultiHeadAttention(nn.Module):
         self.d_k = d_k
         self.d_v = d_v
 
+        ''' nn.Linear创建了神经网络中的线性变换层。它对输入张量d_model执行线性变换，输出大小为n_head * d_k，且没有偏差。
+            
+        '''
         self.w_qs = nn.Linear(d_model, n_head * d_k, bias=False)
         self.w_ks = nn.Linear(d_model, n_head * d_k, bias=False)
         self.w_vs = nn.Linear(d_model, n_head * d_v, bias=False)
