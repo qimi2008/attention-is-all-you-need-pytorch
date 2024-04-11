@@ -16,7 +16,10 @@ class MultiHeadAttention(nn.Module):
         self.d_k = d_k
         self.d_v = d_v
 
-        ''' nn.Linear创建了神经网络中的线性变换层。它对输入张量d_model执行线性变换，输出大小为n_head * d_k，且没有偏差。
+        ''' nn.Linear创建了神经网络中的线性变换层。输入神经元的数量为d_model，输出神经元的数量为为n_head * d_k，且没有偏差，每个神经元一个维度
+            这里其实定义了Y = X*W + b这个线性层。d_model是线性层输入神经元数量。W的值，由torch初始化赋值。后续必须调用self.w_qs(q)把q输入线性层。
+            d_model就是输入embedding的维度（线性层的输入）、d_k是线下层的输出维度，这个w_qs，在这里定义的就是X*W这个算子，当前w_qs是一个函数，待
+            输入N个d_model维的向量才能执行线性运算活动一个N*d_k的输出，这个输出，在这里就是Q、K、V矩阵。它是通过输入X到线性层，进行X*W操作，获得的输出。
             
         '''
         self.w_qs = nn.Linear(d_model, n_head * d_k, bias=False)
