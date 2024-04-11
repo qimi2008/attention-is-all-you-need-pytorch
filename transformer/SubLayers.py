@@ -73,7 +73,7 @@ class MultiHeadAttention(nn.Module):
 
         return q, attn
 
-
+# 这个就是架构图里的FFN模块
 class PositionwiseFeedForward(nn.Module):
     ''' A two-feed-forward-layer module '''
 
