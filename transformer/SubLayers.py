@@ -43,6 +43,8 @@ class MultiHeadAttention(nn.Module):
         ''' 在Layers类里对forward方法使用，是把enc_input作为该方法对q、k、v的赋值传进来。
             因为在这里，要执行Q = Wq * X，K = Wk * X，V = Wv * X的操作。所以要灌入encoder的输入embedding。其中X的维度是N*d_model
             view()方法主要是为了把维度打平。
+            view()函数在这里的作用是将张量进行形状变换，将原始张量的形状进行重新排列，以满足后续操作的需求。
+            view()函数被用于将张量打平，以便进行后续的线性变换操作。
         '''
         # Pass through the pre-attention projection: b x lq x (n*dv)
         # Separate different heads: b x lq x n x dv
@@ -53,6 +55,9 @@ class MultiHeadAttention(nn.Module):
         # Transpose for attention dot product: b x n x lq x dv
         q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
 
+        ''' mask.unsqueeze(1)的作用是在mask张量的第一个维度上增加一个维度。这通常是为了在计算中使用广播操作，以便与其他具有不同维度的张量进行操作。
+            在这种情况下，将mask的维度从(sz_b, 1, len_k)扩展为(sz_b, 1, 1, len_k)，以便与q进行注意力计算时进行广播。
+        '''
         if mask is not None:
             mask = mask.unsqueeze(1)   # For head axis broadcasting.
 
@@ -88,6 +93,8 @@ class PositionwiseFeedForward(nn.Module):
 
         residual = x
 
+        ''' 在attention模块里没有非线性操作，但是在FFN中有relu激活函数
+        '''
         x = self.w_2(F.relu(self.w_1(x)))
         x = self.dropout(x)
         x += residual
