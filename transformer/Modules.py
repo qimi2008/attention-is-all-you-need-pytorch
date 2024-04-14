@@ -9,7 +9,9 @@ __author__ = "Yu-Hsiang Huang"
 '''
 
 class ScaledDotProductAttention(nn.Module):
-    ''' Scaled Dot-Product Attention '''
+    ''' Scaled Dot-Product Attention  定义的起始模块，代码应该从这里开始开启，这里定义了 A = (Q * K.T) / (dim ** 0.5) 和 O = A * V
+        使用这个模块来构建层的是：SubLayers.py模块
+    '''
 
     def __init__(self, temperature, attn_dropout=0.1):
         super().__init__()
