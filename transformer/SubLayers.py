@@ -68,6 +68,8 @@ class MultiHeadAttention(nn.Module):
         ''' 在ScaledDotProductAttention#forward()这里执行 A = (Q * K) / (d_model ** 0.5)
             同时执行 O = A*V；输出的O是N*d_model维度的（这里有可能v和k的维度不一样，还没有想明白先不考虑）
             注意：传入的q、k、v经过view和transpose操作之后，已经变成四维tensor了，形状是：sz_b, n_head,len_q, d_k。
+
+            注意：在ScaledDotProductAttention#forward里并没有看到对多头的b = Wo * (b0,b1,b2,...,bn)进行处理。
         '''
         q, attn = self.attention(q, k, v, mask=mask)
 
