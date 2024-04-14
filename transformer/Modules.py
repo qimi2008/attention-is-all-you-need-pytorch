@@ -38,7 +38,7 @@ class ScaledDotProductAttention(nn.Module):
 
             attn.masked_fill(mask == 0, -1e9)，mask的形状和attn一样，在mask==0的位置把attn的值平滑成-1e9
         '''
-        attn = torch.matmul(q / self.temperature, k.transpose(2, 3))
+        attn = torch.matmul(q / self.temperature, k.transpose(2, 3))     # A = (Q * K.T) / (dim ** 0.5)
 
         if mask is not None:
             attn = attn.masked_fill(mask == 0, -1e9)
@@ -47,6 +47,6 @@ class ScaledDotProductAttention(nn.Module):
         ''' 在这里执行公式里的：O = A * V，是在进行softmax归一化之后
             结果就是：对句子上下文的每个维度加权（权重就是attn_score）求和得出的向量
         '''
-        output = torch.matmul(attn, v)
+        output = torch.matmul(attn, v)   # O = A * V
 
         return output, attn
