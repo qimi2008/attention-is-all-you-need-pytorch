@@ -24,6 +24,7 @@ class ScaledDotProductAttention(nn.Module):
             seq_length表示序列长度
             head_dim表示每个注意力头的维度
             transpose(2, 3)操作将k的维度进行转置，将第2维和第3维交换，从而使得在计算注意力时能够正确地进行矩阵乘法操作。
+            转置第2,3维度，就是要转置seq_length,head_dim这两个维度，而batch_size，num_heads不变。注意是转置操作，N*d,变成d*N矩阵。
 
             将q除以self.temperature是为了缩放注意力权重。通过除以温度参数，
             可以控制softmax函数的输出范围，使得模型更加稳定并且有更好的梯度传播。
