@@ -37,6 +37,11 @@ class DecoderLayer(nn.Module):
         self.enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
         self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
 
+    ''' 对于解码器，需要注意的是每个层中有两个多头注意力处理单元，其中第一个多头注意力处理单元，接收的是解码器自己的输出作为输入。
+        而第二个多头注意力单元，query（q）接收的是解码器第一个多头注意力处理单元的输出作为输入，意味着需要根据自己已经处理的内容来控制输出。
+        k和v接收的是编码器encoder的输出seq_len * d_model作为输入。
+        其中需要注意的是k、v的seq_len和第一个多头注意力生成的q的seq_len不一样，因为q中的seq_len是一步步生成新增的。
+    '''
     def forward(
             self, dec_input, enc_output,
             slf_attn_mask=None, dec_enc_attn_mask=None):
