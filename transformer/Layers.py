@@ -41,6 +41,8 @@ class DecoderLayer(nn.Module):
         而第二个多头注意力单元，query（q）接收的是解码器第一个多头注意力处理单元的输出作为输入，意味着需要根据自己已经处理的内容来控制输出。
         k和v接收的是编码器encoder的输出seq_len * d_model作为输入。
         其中需要注意的是k、v的seq_len和第一个多头注意力生成的q的seq_len不一样，因为q中的seq_len是一步步生成新增的。
+
+        注意：这里来核心的问题也是：如果在第二个多头注意力中，q的seq_len和k、v的seq_len不一样，应该如何处理？没有看到。
     '''
     def forward(
             self, dec_input, enc_output,
