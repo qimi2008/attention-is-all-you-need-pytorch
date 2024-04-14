@@ -26,6 +26,8 @@ class ScaledDotProductAttention(nn.Module):
             transpose(2, 3)操作将k的维度进行转置，将第2维和第3维交换，从而使得在计算注意力时能够正确地进行矩阵乘法操作。
             转置第2,3维度，就是要转置seq_length,head_dim这两个维度，而batch_size，num_heads不变。注意是转置操作，N*d,变成d*N矩阵。
 
+            在公式中，在这里执行的核心操作是：A = (Q * K.T) / (dim ** 0.5)
+
             将q除以self.temperature是为了缩放注意力权重。通过除以温度参数，
             可以控制softmax函数的输出范围，使得模型更加稳定并且有更好的梯度传播。
             这个步骤有助于确保在计算注意力时不会出现数值上的不稳定性或溢出问题。在这里，temperature被赋值为d_k ** 0.5，注意公式中的d_k ** 0.5和代码中的d_k ** 0.5所在的位置
@@ -33,6 +35,8 @@ class ScaledDotProductAttention(nn.Module):
             attn是形状为(batch_size, num_heads, seq_length, seq_length)的张量。在softmax中的dim=-1表示作用于最后一个维度
             softmax操作是在最后一个维度上进行的，不会改变张量的形状，仅在该维度上进行归一化处理
             v和output的形状都是(batch_size, num_heads, seq_length, head_dim)
+
+            attn.masked_fill(mask == 0, -1e9)，mask的形状和attn一样，在mask==0的位置把attn的值平滑成-1e9
         '''
         attn = torch.matmul(q / self.temperature, k.transpose(2, 3))
 
@@ -40,6 +44,9 @@ class ScaledDotProductAttention(nn.Module):
             attn = attn.masked_fill(mask == 0, -1e9)
 
         attn = self.dropout(F.softmax(attn, dim=-1))
+        ''' 在这里执行公式里的：O = A * V，是在进行softmax归一化之后
+            结果就是：对句子上下文的每个维度加权（权重就是attn_score）求和得出的向量
+        '''
         output = torch.matmul(attn, v)
 
         return output, attn
