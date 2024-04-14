@@ -105,7 +105,7 @@ class PositionwiseFeedForward(nn.Module):
         residual = x
 
         ''' 在attention模块里没有非线性操作，但是在FFN中有relu激活函数
-            x的形状是：sz_b * len_q * (n * dv)，其中第三维的大小是n*dv,其中n是多头的数量n_head
+            x的形状是：sz_b * len_q * dv
             这里的操作就是：W2 * Relu(W1 * X)
         '''
         x = self.w_2(F.relu(self.w_1(x)))
