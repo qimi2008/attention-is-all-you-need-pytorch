@@ -50,8 +50,9 @@ class MultiHeadAttention(nn.Module):
             view()函数在这里的作用是将张量进行形状变换，将原始张量的形状进行重新排列，以满足后续操作的需求。
             view()函数被用于将张量打平，以便进行后续的线性变换操作。
         '''
-        # Pass through the pre-attention projection: b x lq x (n*dv)  这里的(n*dv)也指明了传入的参数只有三维，第三维的大小是dv，通过view才构造出n_head这个维度
-        # Separate different heads: b x lq x n x dv ,需要通过view变成四维
+        # Pass through the pre-attention projection: b x lq x (n*dv)  这里的(n*dv)也指明了传入的参数只有三维，第三维的大小是dv，通过w_qs的线性变化层之后，再view才构造出n_head这个维度
+        # Separate different heads: b x lq x n x dv ,需要通过view变成四维，
+        # 特别注意，在这里，线性变换层，w_qs/w_ks/w_vs把q的维度扩大了n_head个分叉，每个分叉对应一个head
         q = self.w_qs(q).view(sz_b, len_q, n_head, d_k)
         k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)
         v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)
@@ -68,8 +69,6 @@ class MultiHeadAttention(nn.Module):
         ''' 在ScaledDotProductAttention#forward()这里执行 A = (Q * K) / (d_model ** 0.5)
             同时执行 O = A*V；输出的O是N*d_model维度的（这里有可能v和k的维度不一样，还没有想明白先不考虑）
             注意：传入的q、k、v经过view和transpose操作之后，已经变成四维tensor了，形状是：sz_b, n_head,len_q, d_k。
-
-            注意：在ScaledDotProductAttention#forward里并没有看到对多头的b = Wo * (b0,b1,b2,...,bn)进行处理。
         '''
         q, attn = self.attention(q, k, v, mask=mask)
 
@@ -77,6 +76,10 @@ class MultiHeadAttention(nn.Module):
         # Combine the last two dimensions to concatenate all the heads together: b x lq x (n*dv)
         # 这里的-1，是自适应调整形状，经过transpose和view操作之后，q的形状调整成三维，sz_b * len_q * (n * dv)
         q = q.transpose(1, 2).contiguous().view(sz_b, len_q, -1)
+        ''' 注意：在ScaledDotProductAttention#forward里对多头的b = Wo * (b0,b1,b2,...,bn)进行处理。其中fc的线性层把q的维度给缩小了n_head倍
+            相当于把在w_qs/w_ks/w_vs把q的维度扩大的n_head个分叉又归拢回来到：(batch_size, seq_length, d_model)，三个维度。
+            分析fc的定义：self.fc = nn.Linear(n_head * d_v, d_model, bias=False)，其输入是：n_head*dv,输出是d_model，正好匹配得上。
+        '''
         q = self.dropout(self.fc(q))
         
         # 这里执行残差连接和layerNorm操作（对数据的所有channel执行均值为0方差为1的归一化处理）
