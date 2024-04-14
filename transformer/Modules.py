@@ -20,7 +20,8 @@ class ScaledDotProductAttention(nn.Module):
 
     def forward(self, q, k, v, mask=None):
 
-        ''' 变量k的形状应该是(batch_size, num_heads, seq_length, head_dim)，其中：
+        ''' 入参q的形状是：sz_b, n_head,len_q, d_k。
+            变量k的形状应该是(batch_size, num_heads, seq_length, head_dim)，其中：
             batch_size表示批量大小
             num_heads表示注意力头的数量
             seq_length表示序列长度
