@@ -15,6 +15,12 @@ class EncoderLayer(nn.Module):
         self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
         self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
 
+    ''' 这里的的forward调用了MultiHeadAttention#forward方法，
+        其中入参k、q、v的维度是：(batch_size, seq_length, d_model)，三维tensor，输入数据里没有n_head
+
+        经过attention操作之后的O，维度和输入是一样的，在公式里是N*d,在这里是：(batch_size, seq_length, d_model)。
+        
+    '''
     def forward(self, enc_input, slf_attn_mask=None):
         enc_output, enc_slf_attn = self.slf_attn(
             enc_input, enc_input, enc_input, mask=slf_attn_mask)
