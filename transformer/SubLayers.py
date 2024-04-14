@@ -50,7 +50,7 @@ class MultiHeadAttention(nn.Module):
             view()函数在这里的作用是将张量进行形状变换，将原始张量的形状进行重新排列，以满足后续操作的需求。
             view()函数被用于将张量打平，以便进行后续的线性变换操作。
         '''
-        # Pass through the pre-attention projection: b x lq x (n*dv)  这里的(n*dv)也指明了传入的参数只有三维，第三维的大小是n*dv
+        # Pass through the pre-attention projection: b x lq x (n*dv)  这里的(n*dv)也指明了传入的参数只有三维，第三维的大小是dv，通过view才构造出n_head这个维度
         # Separate different heads: b x lq x n x dv ,需要通过view变成四维
         q = self.w_qs(q).view(sz_b, len_q, n_head, d_k)
         k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)
