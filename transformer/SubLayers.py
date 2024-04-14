@@ -37,6 +37,7 @@ class MultiHeadAttention(nn.Module):
 
         ''' 在这里，k、q、v的维度是：(batch_size, seq_length, d_model)，三维tensor。注意没有n_head这个维度，参考ScaledDotProductAttention#forward()操作之后的view操作
             d_model是输入的embedding的维度d，seq_length就是是输入序列的长度N，n_head是多头数量
+            这里的q、k、v没有n_head这个维度是对的，因为在输入的时候，并不需要知道多头的数量，多头的数量应该是在构建网络层的时候设置的。
         '''
         d_k, d_v, n_head = self.d_k, self.d_v, self.n_head
         sz_b, len_q, len_k, len_v = q.size(0), q.size(1), k.size(1), v.size(1)
