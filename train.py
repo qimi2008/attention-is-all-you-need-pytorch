@@ -70,7 +70,15 @@ def patch_trg(trg, pad_idx):
 
 
 def train_epoch(model, training_data, optimizer, opt, device, smoothing):
-    ''' Epoch operation in training phase'''
+    ''' Epoch operation in training phase
+        model.train放在网络训练前，model.eval放在网络测试前
+        主要是对Batch Normalization 和 Dropout 层有影响。因为这两层在训练和测试时进行的操作是不同的。
+        运行 model.train() 之后，就告诉了 BN 层，对之后输入的每个 batch 独立计算其均值和方差，BN 层的参数是在不断变化的
+        model.eval() 就是告诉 BN 层，我现在要测试了，你用刚刚统计的 μ \muμ 和 σ \sigmaσ 来测试我，不要再变了
+        model.train() 就是告诉 Dropout 层，你下面应该遮住一神经元
+        model.test() 就是告诉 Dropout 层，你下面别遮住了，我全都需要
+        
+    '''
 
     model.train()
     total_loss, n_word_total, n_word_correct = 0, 0, 0 
