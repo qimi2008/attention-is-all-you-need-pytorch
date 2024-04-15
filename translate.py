@@ -93,6 +93,11 @@ def main():
     with open(opt.output, 'w') as f:
         for example in tqdm(test_loader, mininterval=2, desc='  - (Test)', leave=False):
             #print(' '.join(example.src))
+            ''' src_seq返回与example.src序列中的单词相对应的整数索引列表。
+                src_seq的形状将是一维列表（或数组），其中包含example.src序列中单词的索引。 
+
+                torch.LongTensor([src_seq])将整数索引列表src_seq转换为PyTorch LongTensor
+            '''
             src_seq = [SRC.vocab.stoi.get(word, unk_idx) for word in example.src]
             pred_seq = translator.translate_sentence(torch.LongTensor([src_seq]).to(device))
             pred_line = ' '.join(TRG.vocab.itos[idx] for idx in pred_seq)
