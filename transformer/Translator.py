@@ -37,7 +37,8 @@ class Translator(nn.Module):
 
 
     ''' self.model.decoder，这里的model是init模块里传入的Transformer模块，decoder就是Transformer模块里的解码器层。
-        然后进行softmax操作
+        然后进行架构图中最后的softmax操作。这里的问题是：在 self.model.decoder的输入之前已经进行过self.model.trg_word_prj线性操作了
+        为什么这里在softmax里面还要进行一次。
     '''
     def _model_decode(self, trg_seq, enc_output, src_mask):
         trg_mask = get_subsequent_mask(trg_seq)
