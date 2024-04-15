@@ -7,7 +7,11 @@ from transformer.Layers import EncoderLayer, DecoderLayer
 
 __author__ = "Yu-Hsiang Huang"
 
-
+''' 使用unsqueeze（-2）函数调用来向张量添加额外的维度。它在张量的索引-2（倒数第二）处添加了一个单例维度。
+    在这种情况下，unsqueeze（-2）用于重塑（seq！=pad_idx）返回的张量，以便它可以用于后续操作，如掩蔽。
+    它有助于创建一个与输入张量seq形状相同的掩码张量，但添加了一个额外的维度来表示填充掩码。
+    当将掩码应用于另一个张量时，添加这个额外的维度可以帮助广播操作，例如在Transformer模型中的计算过程中屏蔽填充元素。
+'''
 def get_pad_mask(seq, pad_idx):
     return (seq != pad_idx).unsqueeze(-2)
 
