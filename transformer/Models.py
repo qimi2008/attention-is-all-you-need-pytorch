@@ -14,13 +14,21 @@ __author__ = "Yu-Hsiang Huang"
 
     seq是一个LongTensor，pad_idx也是也LongTensor，seq != pad_idx的操作，如果两个Tensor的对应位置不相等，
     则对应位置赋值1，否则对应位置赋值0，返回的形状和seq一样。其中pad_idx是数据源中被标记为<blank>的地方的索引。
+
+    多维张量本质上就是一个变换，如果维度是 1 ，那么，1 仅仅起到扩充维度的作用，而没有其他用途，
+    因而，squeeze在进行降维操作时，为了加快计算，是可以去掉这些 1 的维度,unsqueeze在进行升维时，也只是增加了一个维度大小是1的维度。
+
+    seq是二维数组(sz_b,len_s),通过unsqueeze(-2)之后，形状变成：(sz_b,1,len_s)
 '''
 def get_pad_mask(seq, pad_idx):
     return (seq != pad_idx).unsqueeze(-2)
 
 
 def get_subsequent_mask(seq):
-    ''' For masking out the subsequent info. '''
+    ''' For masking out the subsequent info. 
+        从seq.size()的返回值，可以确定seq是二维数组(sz_b,len_s),返回值的形状是：(1,len_s,len_s)
+        且mask里的元素的值是下三角的True or False
+    '''
     sz_b, len_s = seq.size()
     subsequent_mask = (1 - torch.triu(
         torch.ones((1, len_s, len_s), device=seq.device), diagonal=1)).bool()
@@ -39,15 +47,24 @@ class PositionalEncoding(nn.Module):
         ''' Sinusoid position encoding table '''
         # TODO: make it with torch instead of numpy
 
+        ''' 位置编码的公式是：w_k = 10000 ** （-2k/d）,其中-2k/d = -k/(d/2),即取输入维度数量的二分之一，取整。
+            在2k的维度上，取：sin(w_k * t),t为seq中的第t个token。
+            在2k+1的维度上，取：cos(w_k * t),t为seq中的第t个token
+            p_vec = (sin(w_1 * t),cos(w_1 * t),sin(w_2 * t),cos(w_2 * t),sin(w_3 * t),cos(w_3 * t),...,sin(w_d * t),cos(w_d * t)),d为输入向量的维度
+
+           get_position_angle_vec方法返回(1,d_hid)的向量，而sinusoid_table是(n_position,d_hid)的二维向量
+        '''
         def get_position_angle_vec(position):
             return [position / np.power(10000, 2 * (hid_j // 2) / d_hid) for hid_j in range(d_hid)]
 
         sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(n_position)])
-        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i，0::2，其中的2是步长，表示第二的维度的遍历从0开始，每次加2
+        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1 1::2，其中的2是步长，表示第二的维度的遍历从1开始，每次加2
 
-        return torch.FloatTensor(sinusoid_table).unsqueeze(0)
+        return torch.FloatTensor(sinusoid_table).unsqueeze(0) # 返回值的形状是：(1,n_position,d_hid)
 
+    ''' 这里在进行位置编码和输入向量编码的按位求和操作
+    '''
     def forward(self, x):
         return x + self.pos_table[:, :x.size(1)].clone().detach()
 
@@ -61,7 +78,13 @@ class Encoder(nn.Module):
 
         super().__init__()
 
-        self.src_word_emb = nn.Embedding(n_src_vocab, d_word_vec, padding_idx=pad_idx)
+        ''' 输入序列变成embedding的操作，是线性变换本身的定义,后续需要把输入灌入src_word_emb，才能获取embedding的编码。
+            输入的是：（n_src_vocab,d_word_vec），每个序列中的次元的向量是：(1,d_word_vec)，执行线性变换：W*X+b
+
+            通过一个torch.nn.ModuleList来传入EncoderLayer，数量的定义的参数n_layers.
+            nn.ModuleList是构建神经网络的容器，允许我们将多个模块组合成更大的模块
+        '''
+        self.src_word_emb = nn.Embedding(n_src_vocab, d_word_vec, padding_idx=pad_idx) 
         self.position_enc = PositionalEncoding(d_word_vec, n_position=n_position)
         self.dropout = nn.Dropout(p=dropout)
         self.layer_stack = nn.ModuleList([
@@ -75,7 +98,7 @@ class Encoder(nn.Module):
 
         enc_slf_attn_list = []
 
-        # -- Forward
+        # -- Forward，在输入Attention模块之前，需要线性变换+位置编码，同时也需要dropout+layerNor操作。
         enc_output = self.src_word_emb(src_seq)
         if self.scale_emb:
             enc_output *= self.d_model ** 0.5
@@ -114,7 +137,7 @@ class Decoder(nn.Module):
 
         dec_slf_attn_list, dec_enc_attn_list = [], []
 
-        # -- Forward
+        # -- Forward 在输入Attention模块之前，需要线性变换+位置编码，同时也需要dropout+layerNor操作。
         dec_output = self.trg_word_emb(trg_seq)
         if self.scale_emb:
             dec_output *= self.d_model ** 0.5
