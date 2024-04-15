@@ -144,6 +144,9 @@ class Decoder(nn.Module):
         dec_output = self.dropout(self.position_enc(dec_output))
         dec_output = self.layer_norm(dec_output)
 
+        ''' 在DecoderLayer#forward方法里，调用了两次Attention模块，第一个Attention模块的入参是：q=dec_output，k=dec_output，v=dec_output
+            第二个attention模块的入参是：q=dec_output，k=enc_output，v=enc_output,其中的dec_output是第一个模块的输出。
+        '''
         for dec_layer in self.layer_stack:
             dec_output, dec_slf_attn, dec_enc_attn = dec_layer(
                 dec_output, enc_output, slf_attn_mask=trg_mask, dec_enc_attn_mask=src_mask)
@@ -220,8 +223,9 @@ class Transformer(nn.Module):
         trg_mask = get_pad_mask(trg_seq, self.trg_pad_idx) & get_subsequent_mask(trg_seq)
 
         enc_output, *_ = self.encoder(src_seq, src_mask)
+        # 这里核心要注意的就是encoder的enc_output作为decoder的入参
         dec_output, *_ = self.decoder(trg_seq, trg_mask, enc_output, src_mask)
-        seq_logit = self.trg_word_prj(dec_output)
+        seq_logit = self.trg_word_prj(dec_output)  # 最后一个线性转换层Linear，还没有到最后的softmax层。
         if self.scale_prj:
             seq_logit *= self.d_model ** -0.5
 
