@@ -36,6 +36,9 @@ class Translator(nn.Module):
             torch.arange(1, max_seq_len + 1, dtype=torch.long).unsqueeze(0))
 
 
+    ''' self.model.decoder，这里的model是init模块里传入的Transformer模块，decoder就是Transformer模块里的解码器层。
+        然后进行softmax操作
+    '''
     def _model_decode(self, trg_seq, enc_output, src_mask):
         trg_mask = get_subsequent_mask(trg_seq)
         dec_output, *_ = self.model.decoder(trg_seq, trg_mask, enc_output, src_mask)
