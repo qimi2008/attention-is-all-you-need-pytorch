@@ -11,6 +11,9 @@ __author__ = "Yu-Hsiang Huang"
     在这种情况下，unsqueeze（-2）用于重塑（seq！=pad_idx）返回的张量，以便它可以用于后续操作，如掩蔽。
     它有助于创建一个与输入张量seq形状相同的掩码张量，但添加了一个额外的维度来表示填充掩码。
     当将掩码应用于另一个张量时，添加这个额外的维度可以帮助广播操作，例如在Transformer模型中的计算过程中屏蔽填充元素。
+
+    seq是一个LongTensor，pad_idx也是也LongTensor，seq != pad_idx的操作，如果两个Tensor的对应位置不相等，
+    则对应位置赋值1，否则对应位置赋值0，返回的形状和seq一样。其中pad_idx是数据源中被标记为<BLANK>的地方的索引。
 '''
 def get_pad_mask(seq, pad_idx):
     return (seq != pad_idx).unsqueeze(-2)
